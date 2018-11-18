@@ -1,12 +1,20 @@
 import configparser
 import logging
+from typing import List
 
 from telegram import Bot, ReplyKeyboardMarkup, Update
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters
 
+from src.question import Question
+from src.user_info_db import UserInfoDatabase
+
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+questions: List[Question] = []
+user_db: UserInfoDatabase = None
 
 
 def start(bot: Bot, update: Update):
@@ -14,11 +22,31 @@ def start(bot: Bot, update: Update):
 
 
 def new_game(bot: Bot, update: Update):
+    user_id = update.message.chat.id
+    print(user_id)
+    user_db.update_user(user_id)
+    print(user_db.get(user_id))
     update.message.reply_text('Please choose:', reply_markup=ReplyKeyboardMarkup([['asdf']]))
 
 
 def on_message(bot: Bot, update: Update):
-    update.message.reply_text('Верно')
+    global questions
+
+    print(update.message)
+    user_id = update.message
+    question_id = 0
+
+    answer = update.message.text
+
+    question = questions[question_id]
+    try:
+        ind = question.options.index(answer)
+        if ind == question.correct:
+            update.message.reply_text('Верно!')
+        else:
+            update.message.reply_text('Неверно.')
+    except ValueError:
+        update.message.reply_text('Выберите вариант из предложенных.')
 
 
 def help(bot: Bot, update):
@@ -35,6 +63,14 @@ def main():
     config.read('../config.ini')
     api_key = config[config.default_section]['api_key']
     proxy_url = config[config.default_section]['proxy_url']
+
+    global user_db
+    user_db = UserInfoDatabase('../users.db')
+
+    global questions
+    questions = [
+        Question('Hueschion', ['hui', 'Djigurda'], 0)
+    ]
 
     updater = Updater(api_key,
                       request_kwargs={'proxy_url': proxy_url})
