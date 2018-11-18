@@ -25,11 +25,13 @@ class UserInfoDatabase:
         with self.__lock:
             with sqlite3.connect(self.__path) as conn:
                 try:
+                    print('Updating user')
                     conn.execute('UPDATE users SET question_id = ?, points = ? WHERE user_id = ?',
                                  (0, 0, user_id))
-                except:
+                except Exception as e:
+                    print(e)
                     conn.execute('INSERT into users (user_id, question_id, points) values (?, ?, ?)',
-                                    (user_id, 0, 0))
+                                 (user_id, 0, 0))
                 conn.commit()
 
     def update_points(self, user_id: int, value: int):
