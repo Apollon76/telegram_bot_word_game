@@ -2,11 +2,14 @@ import configparser
 import logging
 from typing import List
 
+import pandas as pd
+
 from telegram import Bot, ReplyKeyboardMarkup, Update, ReplyKeyboardRemove
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters
 
 from src.question import Question
 from src.user_info_db import UserInfoDatabase
+from src.utils import make_question_from_row
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -38,7 +41,6 @@ def new_game(bot: Bot, update: Update):
         questions[0].text,
         reply_markup=make_markup(questions[0])
     )
-
 
 
 def on_message(bot: Bot, update: Update):
@@ -89,6 +91,14 @@ def error(bot: Bot, update, error):
     logger.warning('Update "%s" caused error "%s"', update, error)
 
 
+def init_questions(path: str):
+    global questions
+
+    data = pd.read_csv(path, header=None)
+    for i, row in data.iterrows():
+        questions.append(make_question_from_row(row.tolist()))
+
+
 def main():
     config = configparser.ConfigParser()
     config.read('../config.ini')
@@ -96,16 +106,14 @@ def main():
     proxy_url = config[config.default_section]['proxy_url']
 
     global user_db
-    user_db = UserInfoDatabase('../users.db')
+    user_db = UserInfoDatabase(config['DATABASE']['path'])
 
-    global questions
-    questions = [
-        Question('Hueschion', ['hui', 'Djigurda'], 0),
-        Question('Hueschion vtoroy', ['Harry', 'pinas', 'lol'], 2),
-    ]
+    init_questions(config[config.default_section]['questions'])
 
-    updater = Updater(api_key,
-                      request_kwargs={'proxy_url': proxy_url})
+    updater = Updater(
+        api_key,
+        request_kwargs={'proxy_url': proxy_url}
+    )
 
     updater.dispatcher.add_handler(CommandHandler('start', start))
     updater.dispatcher.add_handler(CommandHandler('new_game', new_game))
