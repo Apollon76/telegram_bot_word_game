@@ -21,24 +21,33 @@ def start(bot: Bot, update: Update):
     update.message.reply_text('Добро пожаловать! Введите /new_game чтобы начать игру.')
 
 
+def get_user_id(update: Update) -> int:
+    return update.message.chat.id
+
+
+def make_markup(question: Question) -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup([question.options])
+
+
 def new_game(bot: Bot, update: Update):
-    user_id = update.message.chat.id
-    print(user_id)
+    user_id = get_user_id(update)
     user_db.update_user(user_id)
-    print(user_db.get(user_id))
-    update.message.reply_text('Please choose:', reply_markup=ReplyKeyboardMarkup([['asdf']]))
+
+    update.message.reply_text(
+        questions[0].text,
+        reply_markup=make_markup(questions[0])
+    )
 
 
 def on_message(bot: Bot, update: Update):
     global questions
 
-    print(update.message)
-    user_id = update.message
-    question_id = 0
+    user_id = get_user_id(update)
+    question_id = user_db.get(user_id)
+    question = questions[question_id]
 
     answer = update.message.text
 
-    question = questions[question_id]
     try:
         ind = question.options.index(answer)
         if ind == question.correct:
