@@ -3,9 +3,8 @@ import logging
 from typing import List
 
 import pandas as pd
-
 from telegram import Bot, ReplyKeyboardMarkup, Update, ReplyKeyboardRemove
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 from src.question import Question
 from src.user_info_db import UserInfoDatabase
