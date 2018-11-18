@@ -9,15 +9,12 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 
-def start(bot: Bot, update):
+def start(bot: Bot, update: Update):
+    update.message.reply_text('Добро пожаловать! Введите /new_game чтобы начать игру.')
+
+
+def new_game(bot: Bot, update: Update):
     update.message.reply_text('Please choose:', reply_markup=ReplyKeyboardMarkup([['asdf']]))
-
-
-def button(bot: Bot, update: Update):
-    query = update.callback_query
-
-    bot.send_message(text="Selected option: {}".format(query.data),
-                     chat_id=query.message.chat_id)
 
 
 def on_message(bot: Bot, update: Update):
@@ -43,9 +40,11 @@ def main():
                       request_kwargs={'proxy_url': proxy_url})
 
     updater.dispatcher.add_handler(CommandHandler('start', start))
-    updater.dispatcher.add_handler(CallbackQueryHandler(button))
-    updater.dispatcher.add_handler(MessageHandler(Filters.text, on_message))
+    updater.dispatcher.add_handler(CommandHandler('new_game', new_game))
     updater.dispatcher.add_handler(CommandHandler('help', help))
+
+    updater.dispatcher.add_handler(MessageHandler(Filters.text, on_message))
+
     updater.dispatcher.add_error_handler(error)
 
     updater.start_polling()
