@@ -31,7 +31,7 @@ def make_markup(question: Question) -> ReplyKeyboardMarkup:
 
 def new_game(bot: Bot, update: Update):
     user_id = get_user_id(update)
-    user_db.update_user(user_id)
+    user_db.create_user(user_id)
 
     update.message.reply_text(
         questions[0].text,
@@ -43,7 +43,7 @@ def on_message(bot: Bot, update: Update):
     global questions
 
     user_id = get_user_id(update)
-    question_id = user_db.get(user_id)
+    question_id = user_db.get_user(user_id).question_id
     question = questions[question_id]
 
     answer = update.message.text
@@ -51,9 +51,12 @@ def on_message(bot: Bot, update: Update):
     try:
         ind = question.options.index(answer)
         if ind == question.correct:
+            user_db.update(user_id, 1)
             update.message.reply_text('Верно!')
         else:
+            user_db.update(user_id, 0)
             update.message.reply_text('Неверно.')
+        print(user_db.get_user(user_id).points)
     except ValueError:
         update.message.reply_text('Выберите вариант из предложенных.')
 
