@@ -2,7 +2,7 @@ import configparser
 import logging
 from typing import List
 
-from telegram import Bot, ReplyKeyboardMarkup, Update
+from telegram import Bot, ReplyKeyboardMarkup, Update, ReplyKeyboardRemove
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters
 
 from src.question import Question
@@ -32,6 +32,7 @@ def make_markup(question: Question) -> ReplyKeyboardMarkup:
 def new_game(bot: Bot, update: Update):
     user_id = get_user_id(update)
     user_db.create_user(user_id)
+    print(user_db.get_user(user_id))
 
     update.message.reply_text(
         questions[0].text,
@@ -39,11 +40,15 @@ def new_game(bot: Bot, update: Update):
     )
 
 
+
 def on_message(bot: Bot, update: Update):
     global questions
 
     user_id = get_user_id(update)
+
     question_id = user_db.get_user(user_id).question_id
+    if question_id == len(questions):
+        return
     question = questions[question_id]
 
     answer = update.message.text
@@ -51,14 +56,28 @@ def on_message(bot: Bot, update: Update):
     try:
         ind = question.options.index(answer)
         if ind == question.correct:
-            user_db.update(user_id, 1)
+            user_db.update_points(user_id, 1)
             update.message.reply_text('Верно!')
         else:
-            user_db.update(user_id, 0)
+            user_db.update_points(user_id, 0)
             update.message.reply_text('Неверно.')
         print(user_db.get_user(user_id).points)
     except ValueError:
         update.message.reply_text('Выберите вариант из предложенных.')
+        return
+
+    user_db.next_question(user_id)
+
+    if question_id + 1 == len(questions):
+        update.message.reply_text(
+            f'Вы набрали {user_db.get_user(user_id).points} балла(ов)!',
+            reply_markup=ReplyKeyboardRemove())
+        return
+
+    update.message.reply_text(
+        questions[question_id + 1].text,
+        reply_markup=make_markup(questions[question_id + 1])
+    )
 
 
 def help(bot: Bot, update):
@@ -81,7 +100,8 @@ def main():
 
     global questions
     questions = [
-        Question('Hueschion', ['hui', 'Djigurda'], 0)
+        Question('Hueschion', ['hui', 'Djigurda'], 0),
+        Question('Hueschion vtoroy', ['Harry', 'pinas', 'lol'], 2),
     ]
 
     updater = Updater(api_key,
