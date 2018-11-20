@@ -6,9 +6,9 @@ import pandas as pd
 from telegram import Bot, ReplyKeyboardMarkup, Update, ReplyKeyboardRemove
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
+from src import utils
 from src.question import Question
 from src.user_info_db import UserInfoDatabase
-from src.utils import make_question_from_row
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -34,7 +34,6 @@ def make_markup(question: Question) -> ReplyKeyboardMarkup:
 def new_game(bot: Bot, update: Update):
     user_id = get_user_id(update)
     user_db.create_user(user_id)
-    print(user_db.get_user(user_id))
 
     update.message.reply_text(
         questions[0].text,
@@ -49,6 +48,7 @@ def on_message(bot: Bot, update: Update):
 
     question_id = user_db.get_user(user_id).question_id
     if question_id == len(questions):
+        start(bot, update)
         return
     question = questions[question_id]
 
@@ -62,7 +62,6 @@ def on_message(bot: Bot, update: Update):
         else:
             user_db.update_points(user_id, 0)
             update.message.reply_text('Неверно.')
-        print(user_db.get_user(user_id).points)
     except ValueError:
         update.message.reply_text('Выберите вариант из предложенных.')
         return
@@ -73,6 +72,7 @@ def on_message(bot: Bot, update: Update):
         update.message.reply_text(
             f'Вы набрали {user_db.get_user(user_id).points} балла(ов)!',
             reply_markup=ReplyKeyboardRemove())
+        start(bot, update)
         return
 
     update.message.reply_text(
@@ -93,9 +93,11 @@ def error(bot: Bot, update, error):
 def init_questions(path: str):
     global questions
 
-    data = pd.read_csv(path, header=None)
+    data = pd.read_csv(path, header=None, delimiter='|')
+    all_definitions = data[1].tolist()
     for i, row in data.iterrows():
-        questions.append(make_question_from_row(row.tolist()))
+        options = utils.random_definitions(all_definitions, row[1], 4)
+        questions.append(Question(row[0], options, options.index(row[1])))
 
 
 def main():

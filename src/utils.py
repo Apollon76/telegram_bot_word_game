@@ -1,7 +1,15 @@
-from typing import Any, List
+import random
+from typing import List
 
-from src.question import Question
 
-
-def make_question_from_row(row: List[Any]) -> Question:
-    return Question(row[0], row[1:-1], row[-1])
+def random_definitions(definitions: List[str], correct: str, number: int) -> List[str]:
+    result = [correct]
+    for i in range(number - 1):
+        while True:
+            word = random.choice(definitions)
+            if word in result:
+                continue
+            result.append(word)
+            break
+    random.shuffle(result)
+    return result
