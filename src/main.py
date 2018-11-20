@@ -48,7 +48,7 @@ def on_message(bot: Bot, update: Update):
 
     question_id = user_db.get_user(user_id).question_id
     if question_id == len(questions):
-        start(bot, update)
+        help(bot, update)
         return
     question = questions[question_id]
 
@@ -72,7 +72,7 @@ def on_message(bot: Bot, update: Update):
         update.message.reply_text(
             f'Вы набрали {user_db.get_user(user_id).points} балла(ов)!',
             reply_markup=ReplyKeyboardRemove())
-        start(bot, update)
+        help(bot, update)
         return
 
     update.message.reply_text(
@@ -82,7 +82,7 @@ def on_message(bot: Bot, update: Update):
 
 
 def help(bot: Bot, update):
-    update.message.reply_text("Use /start to test this bot.")
+    update.message.reply_text('Введите /new_game чтобы начать игру.')
 
 
 def error(bot: Bot, update, error):
