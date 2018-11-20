@@ -28,7 +28,7 @@ def get_user_id(update: Update) -> int:
 
 
 def make_markup(question: Question) -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup([question.options])
+    return ReplyKeyboardMarkup([option] for option in question.options)
 
 
 def new_game(bot: Bot, update: Update):
